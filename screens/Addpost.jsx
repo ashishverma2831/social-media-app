@@ -2,7 +2,8 @@ import { StyleSheet, Text, View } from 'react-native'
 import React, { useState } from 'react'
 import { Button, TextInput, Image } from 'react-native-paper'
 import { addDoc, collection, getFirestore } from 'firebase/firestore';
-import { app } from '../firebaseConfig';
+import { getDownloadURL, getStorage, ref, uploadBytesResumable } from 'firebase/storage';
+import app from '../firebaseConfig';
 import { Controller, useForm } from 'react-hook-form';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -13,9 +14,11 @@ const Addpost = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [image, setImage] = useState(null);
+  const [downloadUrl, setDownloadUrl] = useState('');
 
-  const publishPost = async (title,description) => {
-    const docRef = await addDoc(collection(db, "socialposts"), { title, description });
+  const publishPost = async (data) => {
+    data.image = downloadUrl;
+    const docRef = await addDoc(collection(db, "socialposts"), data);
     console.log("Document written with ID: ", docRef);
   }
 
@@ -27,11 +30,16 @@ const Addpost = () => {
     defaultValues: {
       title: "",
       description: "",
+      postedOn: new Date().toISOString(),
     },
   })
   const onSubmit = (data) => {
     alert(JSON.stringify(data));
-    publishPost(data.title, data.description);
+    publishPost(data);
+  }
+
+  const generateTimestamp = () => {
+    return new Date().toISOString();
   }
 
   const pickImage = async () => {
@@ -47,20 +55,71 @@ const Addpost = () => {
 
     if (!result.canceled) {
       setImage(result.assets[0].uri);
+      uploadFile(result.assets[0].uri);
     }
   };
+
+  const uploadFile = async (uri) => {
+    const storage = getStorage(app);
+    const storageRef = ref(storage, `feed-images/${generateTimestamp()}.jpg`);
+
+    try {
+      // 1. Fetch image data
+      const response = await fetch(uri);
+      const blob = await response.blob();
+
+      const uploadTask = uploadBytesResumable(storageRef, blob);
+
+      uploadTask.on('state_changed',
+        (snapshot) => {
+          // Handle progress
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log('Upload is ' + progress + '% done');
+        },
+        (error) => {
+          // Handle error
+          console.error('Error uploading image:', error);
+          alert('Error uploading image:', error);
+        },
+        () => {
+          // Handle successful upload
+          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+            // 3. Store image URL in Firestore
+            console.log('File available at', downloadURL);
+            setDownloadUrl(downloadURL);
+            // const imagesCollectionRef = collection(db, 'images');
+            // addDoc(imagesCollectionRef, { imageUrl: downloadURL })
+            //   .then((docRef) => {
+            //     console.log('Image URL stored in Firestore:', docRef.id);
+            //   })
+            //   .catch((error) => {
+            //     console.error('Error storing image URL in Firestore:', error);
+            //   });
+          });
+        }
+      );
+    } catch (error) {
+      console.error('Error uploading image:', error);
+    }
+
+    // 'file' comes from the Blob or File API
+    // uploadBytes(storageRef, image).then((snapshot) => {
+    //   console.log('Uploaded a blob or file!');
+    //   console.log(snapshot);
+    // });
+  }
 
   return (
     <View>
       <Text>Addpost</Text>
 
       <Button onPress={pickImage} >Pick an Image</Button>
-      {image && <Image source={{ uri: image }} style={{with:'100%',height:300}} resizeMode='contain'  />}
+      {image && <Image source={{ uri: image }} style={{ with: '100%', height: 300 }} resizeMode='contain' />}
 
       <Controller
         control={control}
         rules={{
-          required: {message: 'Title is required.', value: true},
+          required: { message: 'Title is required.', value: true },
         }}
         render={({ field: { onChange, onBlur, value } }) => (
           <TextInput
@@ -80,7 +139,7 @@ const Addpost = () => {
       <Controller
         control={control}
         rules={{
-          required: {message: 'Description is required.', value: true},
+          required: { message: 'Description is required.', value: true },
         }}
         render={({ field: { onChange, onBlur, value } }) => (
           <TextInput
