@@ -11,16 +11,10 @@ const db = getFirestore(app);
 
 const Addpost = () => {
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  // const [title, setTitle] = useState('');
+  // const [description, setDescription] = useState('');
   const [image, setImage] = useState(null);
   const [downloadUrl, setDownloadUrl] = useState('');
-
-  const publishPost = async (data) => {
-    data.image = downloadUrl;
-    const docRef = await addDoc(collection(db, "socialposts"), data);
-    console.log("Document written with ID: ", docRef);
-  }
 
   const {
     control,
@@ -107,6 +101,12 @@ const Addpost = () => {
     //   console.log('Uploaded a blob or file!');
     //   console.log(snapshot);
     // });
+  }
+
+  const publishPost = async (data) => {
+    data.image = downloadUrl;
+    const docRef = await addDoc(collection(db, "socialposts"), data);
+    console.log("Document written with ID: ", docRef);
   }
 
   return (
