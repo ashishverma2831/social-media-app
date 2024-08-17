@@ -1,11 +1,11 @@
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, View, Image } from 'react-native'
 import React, { useState } from 'react'
-import { Button, TextInput, Image } from 'react-native-paper'
+import { Button, TextInput } from 'react-native-paper'
 import { addDoc, collection, getFirestore } from 'firebase/firestore';
 import { getDownloadURL, getStorage, ref, uploadBytesResumable } from 'firebase/storage';
-import app from '../firebaseConfig';
 import { Controller, useForm } from 'react-hook-form';
 import * as ImagePicker from 'expo-image-picker';
+import app from '../firebaseConfig';
 
 const db = getFirestore(app);
 
@@ -39,7 +39,7 @@ const Addpost = () => {
   const pickImage = async () => {
     // No permissions request is necessary for launching the image library
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
