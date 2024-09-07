@@ -1,8 +1,8 @@
-import { FlatList, StyleSheet, Text, View } from 'react-native'
+import { FlatList, ScrollView, StyleSheet, Text, View } from 'react-native'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { collection, doc, getDoc, getDocs, getFirestore, setDoc } from 'firebase/firestore'
 import app from '../firebaseConfig';
-import { Card, IconButton } from 'react-native-paper';
+import { Avatar, Button, Card, IconButton } from 'react-native-paper';
 import Comments from './Comments';
 // import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
@@ -10,6 +10,7 @@ const db = getFirestore(app);
 const FeedCard = ({ data, feedlist, setFeedlist, index }) => {
 
   const [showComments, setShowComments] = useState(false);
+
   const likePost = async () => {
     const ref = doc(db, 'socialposts', data.id);
     // await ref.doc(data.id).update({
@@ -29,7 +30,9 @@ const FeedCard = ({ data, feedlist, setFeedlist, index }) => {
 
   return <>
     <Card style={styles.card} key={data.id}>
-      <Card.Title title={data.title} subtitle={data.description} />
+      <Card.Title title={data.title} subtitle={data.description}
+        left={ props => <Avatar.Image {...props} size={40} source={{ uri: data.image }} /> }
+      /> 
       <Text>{new Date(data.postedOn).toDateString()}</Text>
       <Card.Cover source={{ uri: data.image }} />
       <View style={styles.iconContainer}>
@@ -38,8 +41,8 @@ const FeedCard = ({ data, feedlist, setFeedlist, index }) => {
           <Text>{data.likes ? data.likes : '0'}</Text>
         </View>
         <View style={styles.iconButton}>
-        <IconButton onPress={() => { setShowComments(true) }} icon='comment-outline' mode='contained' />
-          <Text>{data.comments?data.comments.length:'0'}</Text>
+          <IconButton onPress={() => { setShowComments(true) }} icon='comment-outline' mode='contained' />
+          <Text>{data.comments ? data.comments.length : '0'}</Text>
         </View>
         <IconButton icon='share' mode='contained' />
       </View>
@@ -48,10 +51,22 @@ const FeedCard = ({ data, feedlist, setFeedlist, index }) => {
   </>
 }
 
+const tabs = ['Best Posts', 'Trending', 'Latest', 'My Posts'];
+const TabList = ({activeTab,setActiveTab}) => {
+  return <View style={{ flexDirection: 'row', gap:10 }}>
+    {
+      tabs.map((tab, index) => {
+        return <Button key={index} mode={activeTab===tab?'contained':'outlined'}>{tab}</Button>
+      })
+    }
+  </View>
+}
+
 const Feed = () => {
 
   const [feedlist, setFeedlist] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState('Best Posts');
 
   const bottomSheetRef = useRef(null);
   const handleSheetChanges = useCallback((index) => {
@@ -89,7 +104,9 @@ const Feed = () => {
 
   return (
     <View>
-      <Text>Feed</Text>
+      {/* <ScrollView horizontal={true} style={{flexDirection:'row'}}> */}
+      <TabList activeTab={activeTab} setActiveTab={setActiveTab} />
+      {/* </ScrollView> */}
       {displayFeed()}
 
     </View>
