@@ -4,20 +4,30 @@ import { collection, doc, getDoc, getDocs, getFirestore, setDoc } from 'firebase
 import app from '../firebaseConfig';
 import { Avatar, Button, Card, IconButton } from 'react-native-paper';
 import Comments from './Comments';
+import ReactTimeAgo, { useTimeAgo } from 'react-time-ago';
 // import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
 const db = getFirestore(app);
+
+const FormatDate = ({date}) => {
+  console.log(date);
+  const result = useTimeAgo(date || new Date());
+  return <Text>{result}</Text>
+}
+
 const FeedCard = ({ data, feedlist, setFeedlist, index }) => {
 
   const [showComments, setShowComments] = useState(false);
+  const [liked, setLiked] = useState(false);
 
   const likePost = async () => {
+
     const ref = doc(db, 'socialposts', data.id);
     // await ref.doc(data.id).update({
     //   likes: data.likes + 1
     // })
     await setDoc(ref,
-      { likes: (data.likes ? data.likes : 0) + 1 },
+      { likes: (data.likes ? data.likes : 0) + (liked?-1:1) },
       { merge: true });
 
     const updateData = (await getDoc(ref)).data();
@@ -25,19 +35,23 @@ const FeedCard = ({ data, feedlist, setFeedlist, index }) => {
     const temp = feedlist;
     temp[index] = { ...data, likes: updateData.likes };
     setFeedlist([...temp]);
-
+      setLiked(!liked);
   }
 
   return <>
     <Card style={styles.card} key={data.id}>
-      <Card.Title title={data.title} subtitle={data.description}
+      <Card.Title 
+        title={data.title}
+        subtitle={new Date(data.postedOn).toDateString()}
         left={ props => <Avatar.Image {...props} size={40} source={{ uri: data.image }} /> }
+        right={props=><IconButton {...props} icon='dots-vertical' />}
       /> 
-      <Text>{new Date(data.postedOn).toDateString()}</Text>
+      {/* <Text>{new Date(data.postedOn).toDateString()}</Text> */}
+      {/* <FormatDate date={new Date(data.postedOn)} /> */}
       <Card.Cover source={{ uri: data.image }} />
       <View style={styles.iconContainer}>
         <View style={styles.iconButton}>
-          <IconButton onPress={likePost} icon='heart' mode='contained' />
+          <IconButton iconColor='red' onPress={likePost} icon={liked?'heart':'heart-outline'} mode='contained' />
           <Text>{data.likes ? data.likes : '0'}</Text>
         </View>
         <View style={styles.iconButton}>

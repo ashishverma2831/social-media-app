@@ -6,11 +6,14 @@ import Addpost from './screens/Addpost';
 import { NavigationContainer } from '@react-navigation/native';
 import { IconButton, useTheme } from 'react-native-paper';
 import Signup from './screens/Signup';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Login from './screens/Login';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import app from './firebaseConfig';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import TimeAgo from 'javascript-time-ago'
+import en from 'javascript-time-ago/locale/en'
+
 
 const auth = getAuth(app);
 const Tab = createBottomTabNavigator();
@@ -18,10 +21,17 @@ const Tab = createBottomTabNavigator();
 export default function App() {
 
   const theme = useTheme();
+  const runOnce = useRef(false);
 
   const [signupOpen, setSignupOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const [userLoggedin, setUserLoggedin] = useState(false);
+
+  useEffect(()=>{
+    if(runOnce.current) return;
+    TimeAgo.addDefaultLocale(en)
+    runOnce.current = true;
+  },[])
 
   useEffect(() => {
     onAuthStateChanged(auth, (user) => {
