@@ -4,7 +4,6 @@ import { collection, doc, getDoc, getDocs, getFirestore, setDoc } from 'firebase
 import app from '../firebaseConfig';
 import { Avatar, Button, Card, IconButton } from 'react-native-paper';
 import Comments from './Comments';
-import ReactTimeAgo, { useTimeAgo } from 'react-time-ago';
 // import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
 const db = getFirestore(app);
